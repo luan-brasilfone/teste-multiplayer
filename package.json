@@ -7,6 +7,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.2",
+    "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -16,7 +17,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "conc:start": "concurrently \"react-scripts start\" \"node src/Server.js\"",
     "start": "react-scripts start",
+    "startBak": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

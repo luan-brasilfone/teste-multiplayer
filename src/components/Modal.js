@@ -39,7 +39,7 @@ const CustomModal = ({ isOpen, onRequestClose, message, onClose }) => {
       contentLabel="Game Over"
     >
       <h2>{message}</h2>
-      <ModalButton onClick={onClose}>Fechar</ModalButton>
+      <ModalButton onClick={onClose} className='keyboard-enter'>Fechar</ModalButton>
     </Modal>
   );
 };

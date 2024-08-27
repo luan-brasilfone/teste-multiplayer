@@ -60,7 +60,7 @@ const Button = styled.button`
   border-radius: 8px;
 `;
 
-const StartButton = styled(Button)`
+const ModeButton = styled(Button)`
   background-color: #4CAF50;
 `;
 
@@ -80,6 +80,7 @@ const CountdownNumber = styled.div`
 
 function App() {
   const [lock, setLock] = useState(false);
+  const [room, setRoom] = useState("");
   const [guess, setGuess] = useState("");
   const [attempts, setAttempts] = useState([[], []]);
   const [keyColors, setKeyColors] = useState({});
@@ -122,9 +123,17 @@ function App() {
     }
   }, [showCountdown, countdown]);
 
-  const startGame = () => {
+  const localGame = () => {
     axios.get(BACKEND_URL + '/new')
       .then(() => setShowCountdown(true));
+  };
+
+  const createRoom = () => {
+    axios.get(BACKEND_URL + '/newRoom')
+      .then(response => {
+        if (response.data.error) return alert(response.data.error);
+        setRoom(response.data.room);
+      });
   };
 
   const startTimer = (player) => {
@@ -233,8 +242,14 @@ function App() {
   const handleKeydownEvent = (e) => {
     const key = e.key.toUpperCase();
     if (key === 'ENTER')
-      for (const element of document.querySelectorAll('button')) element.click();
+      for (const element of document.querySelectorAll('.keyboard-enter'))
+        // console.log(element);
+        element.click();
   };
+
+  setInterval(() => {
+    for (const element of document.querySelectorAll('.focus')) element.focus();
+  });
 
   if (!window.keydownEventAdded) {
     document.addEventListener('keydown', handleKeydownEvent);
@@ -245,7 +260,7 @@ function App() {
     <Background>
         <Container>
         <h1>Termo Quarteto</h1>
-        {!gameStarted && !showCountdown && <StartButton onClick={startGame}>Start</StartButton>}
+        {!gameStarted && !showCountdown && <ModeButton className='keyboard-enter' onClick={localGame}>Local</ModeButton>}
         {showCountdown && (
             <CountdownContainer>
             <CountdownNumber>{countdown}</CountdownNumber>
@@ -257,8 +272,8 @@ function App() {
                 <Board player={0} attempts={attempts[0]} timer={timers[0]} />
                 <Board player={1} attempts={attempts[1]} timer={timers[1]} />
             </PlayerContainer>
-            <Input value={guess} onChange={handleChange} maxLength={5} />
-            <Button onClick={handleGuess}>Enter</Button>
+            <Input className='focus' value={guess} onChange={handleChange} maxLength={5} />
+            <Button className='keyboard-enter' onClick={handleGuess}>Enter</Button>
             <Keyboard keyColors={keyColors} onKeyPress={handleChange} onEnter={handleGuess} />
             </>
         )}

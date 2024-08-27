@@ -5,7 +5,14 @@ const dictionary = require('./components/Dictionary');
 const PORT = 3001;
 const app = express();
 
+function normalizeString(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function compareWords(word1, word2) {
+  word1 = normalizeString(word1);
+  word2 = normalizeString(word2);
+
   if (word1.length !== 5 || word2.length !== 5) {
     throw new Error("Both words must be exactly 5 characters long.");
   }
@@ -55,8 +62,66 @@ dictionary.then(dict => {
   console.log('OK');
 
   let secretWord;
+  let rooms = [];
 
   app.use(cors());
+
+  // Rooms logic
+  app.get('/newRoom', (req, res) => {
+
+    let room;
+    for (let tries = 0; tries < 10; tries++) {
+        room = Math.random().toString(36).substring(7);
+        if (!rooms.includes(room)) {
+            rooms.push({room, players: []});
+            return res.json({ room });
+        }
+    }
+
+    // Todo: expire rooms
+
+    res.json({ error: 'Failed to create room' });
+  });
+
+  app.get('/joinRoom', (req, res) => {
+    const room = req.query.room;
+    const filter = rooms.filter(r => r.room === room);
+
+    if (!filter.length) return res.json({ error: 'Room not found' });
+    if (!filter.players.length >= 2) return res.json({ error: 'Room is full' });
+
+    res.json({ room, success: true });
+  });
+
+  app.get('/newRoomWord', (req, res) => {
+    const room = req.query.room;
+    const filter = rooms.filter(r => r.room === room);
+
+    if (!filter.length) return res.json({ error: 'Room not found' });
+
+    const word = dict.random().toUpperCase();
+
+    filter[0].word = word;
+    console.log('New word', word, 'for room', room);
+
+    res.json({ success: true });
+  });
+
+  app.get('/tryRoom', (req, res) => {
+    const room = req.query.room;
+    const guess = req.query.guess.toUpperCase();
+    const filter = rooms.filter(r => r.room === room);
+
+    if (!filter.length) return res.json({ error: 'Room not found' });
+
+    const word = filter[0].word;
+    if (normalizeString(guess) === normalizeString(word))
+      return res.json({ correct: true, word });
+
+    const present = compareWords(word, guess);
+
+    res.json({ present });
+  });
 
   app.get('/new', (req, res) => {
     secretWord = dict.random().toUpperCase();
@@ -71,9 +136,8 @@ dictionary.then(dict => {
 
     if (index === -1) return res.json({ invalid: true });
 
-    if (guess.normalize("NFD").replace(/[\u0300-\u036f]/g, "") ===
-      secretWord.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    ) return res.json({ correct: true, word: secretWord });
+    if (normalizeString(guess) === normalizeString(secretWord))
+      return res.json({ correct: true, word: secretWord });
 
     const present = compareWords(secretWord, guess);
 
